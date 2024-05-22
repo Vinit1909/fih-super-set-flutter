@@ -1,10 +1,10 @@
+// lib/login/login.dart
+import 'dart:convert'; // Add this import for jsonDecode
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart'; // Add this import for rootBundle
 import 'package:myapp/common/translator.dart';
-import 'package:myapp/main.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
+import 'package:myapp/gallery/gallery_page.dart'; // Updated import
+import 'package:myapp/signup/signup_page.dart'; // Ensure this import is present
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -39,103 +39,19 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  Future<void> loadSelectedLanguage() async {
-    final prefs = await SharedPreferences.getInstance();
-    final storedLanguage = prefs.getString('selectedLanguage');
-    if (storedLanguage != null && _languageMap.containsKey(storedLanguage)) {
-      _selectedLanguageCode = storedLanguage;
-    } else if (_languageMap.isNotEmpty) {
-      _selectedLanguageCode = _languageMap.keys.first;
-      saveSelectedLanguage(_selectedLanguageCode);
-    }
-    setState(() {});
-  }
-
-  Future<void> saveSelectedLanguage(String? lang) async {
-    final prefs = await SharedPreferences.getInstance();
-    if (lang != null) {
-      await prefs.setString('selectedLanguage', lang);
-    }
-  }
-
-  Future<void> signup(String email, String password) async {
-    var url = Uri.parse('http://localhost:4000/api/signup');
-    var headers = {'Content-Type': 'application/json'};
-    var body = jsonEncode({'email': email, 'password': password});
-    try {
-      var response = await http.post(url, headers: headers, body: body);
-      if (response.statusCode == 201) {
-        String responseBody = response.body;
-        var decodedResponse = json.decode(responseBody);
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('userToken', decodedResponse['userToken']);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => SuperSetHomePage()),
-        );
-      } else {
-        print('Failed to signup');
-        // Handle error or display message
-      }
-    } catch (e) {
-      print('Error connecting to the server: $e');
-      // Handle exception by showing user-friendly error message
-    }
-  }
-
-  Future<void> signin(String email, String password) async {
-    var signInurl = Uri.parse('http://localhost:4000/api/signin');
-    var headers = {'Content-Type': 'application/json'};
-    var body = jsonEncode({'email': email, 'password': password});
-    try {
-      var response = await http.post(signInurl, headers: headers, body: body);
-      if (response.statusCode == 200) {
-        String responseBody = response.body;
-        var decodedSigninResponse = json.decode(responseBody);
-        final prefs = await SharedPreferences.getInstance();
-        String userToken = decodedSigninResponse['userToken'];
-        await prefs.setString('userToken', decodedSigninResponse['userToken']);
-        var profileUrl =
-            Uri.parse('http://localhost:4000/api/get-user-profile');
-        var profileHeaders = {
-          'Content-Type': 'application/json',
-          'Authorization': userToken,
-        };
-        var profileResponse =
-            await http.get(profileUrl, headers: profileHeaders);
-        if (profileResponse.statusCode == 200) {
-          String profileResponseBody = profileResponse.body;
-          var decodedProfileResponse = json.decode(profileResponseBody);
-
-          // Store user profile details in SharedPreferences
-          await prefs.setString(
-              'user_name', decodedProfileResponse['user_name']);
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => SuperSetHomePage()),
-          );
-        } else {
-          print('Failed to retrieve user profile');
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => SuperSetHomePage()),
-          );
-        }
-      } else {
-        print('Failed to login');
-        // Handle error or display message
-      }
-    } catch (e) {
-      print('Error connecting to the server: $e');
-      // Handle exception by showing user-friendly error message
-    }
+  void navigateToGallery() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const GalleryPage()),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Super Set')),
+      appBar: AppBar(
+        title: const Text('Super Set'),
+      ),
       body: Center(
         child: SingleChildScrollView(
           child: ConstrainedBox(
@@ -145,6 +61,11 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
+                  Image.asset(
+                    'assets/images/superset-logo.png',
+                    height: 200, // Increased the height
+                  ),
+                  const SizedBox(height: 20),
                   if (!_showLoginForm && _languageMap.isNotEmpty) ...[
                     DropdownButtonFormField<String>(
                       value: _selectedLanguageCode,
@@ -155,7 +76,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       onChanged: (String? newValue) async {
                         if (newValue != null) {
-                          await saveSelectedLanguage(newValue);
                           await Translator.setCurrentLanguage(newValue);
                           setState(() {
                             _selectedLanguageCode = newValue;
@@ -220,7 +140,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Login and Sign Up Buttons
                     Row(
                       children: <Widget>[
                         Expanded(
@@ -228,8 +147,8 @@ class _LoginPageState extends State<LoginPage> {
                             padding: const EdgeInsets.only(right: 10),
                             child: ElevatedButton(
                               onPressed: () {
-                                signin(_emailController.text,
-                                    _passwordController.text);
+                                // Bypass authentication and navigate to GalleryPage
+                                navigateToGallery();
                               },
                               child: Text(Translator.translate('login')),
                               style: ElevatedButton.styleFrom(
@@ -244,8 +163,11 @@ class _LoginPageState extends State<LoginPage> {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () {
-                              signup(_emailController.text,
-                                  _passwordController.text);
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const SignupPage()),
+                              );
                             },
                             child: Text(Translator.translate('sign_up')),
                             style: ElevatedButton.styleFrom(
@@ -259,7 +181,6 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    // Forgot Password Button
                     TextButton(
                       onPressed: () {},
                       child: Text(Translator.translate('forgot_password')),

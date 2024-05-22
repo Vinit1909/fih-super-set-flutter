@@ -63,6 +63,17 @@ flutter:
     - assets/language_options.json
     - assets/i18n/EN.json
     - assets/i18n/ES.json
+    - assets/images/game1.png
+    - assets/images/game2.png
+    - assets/images/game3.png
+    - assets/images/game4.png
+    - assets/images/game5.png
+    - assets/images/game6.png
+    - assets/images/game7.png
+    - assets/images/game8.png
+    - assets/images/game9.png
+    - assets/images/game10.png
+    - assets/images/superset-logo.png
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -98,3 +109,6 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+
+
